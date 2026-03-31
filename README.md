@@ -77,7 +77,7 @@ You can install Postman via this website: https://www.postman.com/downloads/
     -   [✓] Commit: `Implement receive function in Notification controller.`
     -   [✓] Commit: `Implement list_messages function in Notification service.`
     -   [✓] Commit: `Implement list function in Notification controller.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
+    -   [✓] Write answers of your learning module's "Reflection Subscriber-2" questions in this README.
 
 ## Your Reflections
 This is the place for you to write reflections:
@@ -182,3 +182,92 @@ Kesimpulan
 - Kombinasi lazy_static + RwLock adalah solusi aman untuk global mutable state di Rust
 
 #### Reflection Subscriber-2
+
+1. Eksplorasi di luar tutorial (misalnya src/lib.rs)
+
+Ya, saya mencoba mengeksplorasi beberapa bagian di luar langkah tutorial, seperti src/lib.rs.
+
+Dari eksplorasi tersebut, saya memahami bahwa:
+
+- File `lib.rs` berfungsi sebagai entry point library untuk konfigurasi global
+- Terdapat konfigurasi penting seperti:
+  - `APP_CONFIG` → untuk mengatur URL publisher dan receiver
+  - `REQWEST_CLIENT` → HTTP client yang digunakan untuk komunikasi antar service
+- Konfigurasi ini memungkinkan aplikasi:
+  - Menjadi lebih fleksibel (tidak hardcoded)
+  - Mudah diubah melalui environment variable (`.env`)
+
+Insight yang didapat:
+
+- Konsep centralized configuration sangat penting dalam aplikasi terdistribusi
+- Memudahkan scaling dan deployment (misalnya jika URL berubah)
+
+2. Bagaimana Observer Pattern memudahkan penambahan subscriber?
+
+Dengan menggunakan Observer Pattern, sistem menjadi sangat fleksibel dalam menambahkan subscriber.
+
+Saat menambah banyak Receiver (subscriber):
+
+- Setiap instance Receiver cukup melakukan subscribe
+- Publisher tidak perlu diubah sama sekali
+- Subscriber akan otomatis menerima notifikasi sesuai product_type
+
+Keuntungan:
+
+- Loose coupling antara publisher dan subscriber
+- Mudah scaling (tinggal tambah instance baru)
+
+Bagaimana jika ada lebih dari satu Main App (publisher)?
+
+Jika kita menambahkan lebih dari satu instance Main App:
+
+- Sistem menjadi lebih kompleks
+- Subscriber harus tahu:
+  - Publisher mana yang akan di-subscribe
+- Bisa terjadi:
+  - Duplikasi notifikasi
+  - Inconsistency data antar publisher
+
+Jadi:
+
+- Menambah subscriber (Receiver) → mudah
+- Menambah publisher (Main App) → lebih kompleks
+
+Biasanya solusi untuk multi-publisher:
+
+- Gunakan message broker (Kafka, RabbitMQ)
+- Atau central event system
+
+3. Pengalaman menggunakan testing dan Postman
+
+Saya mencoba menggunakan Postman untuk menguji API yang telah dibuat.
+
+Manfaat yang dirasakan:
+
+- Mempermudah testing endpoint tanpa perlu frontend
+- Bisa langsung melihat response dari server
+- Memudahkan debugging jika terjadi error
+
+Fitur yang berguna:
+
+- Collections
+→ Mengelompokkan request (subscribe, unsubscribe, publish, dll)
+- Environment Variables
+→ Menyimpan base URL (misalnya port 8001, 8002, 8003)
+- History
+→ Melihat request sebelumnya
+- Testing Script (opsional)
+→ Validasi response otomatis
+
+Tentang testing:
+
+Saya juga memahami bahwa membuat test sendiri (unit/integration test):
+
+- Sangat membantu memastikan fungsi berjalan dengan benar
+- Berguna untuk mencegah bug saat pengembangan lanjutan
+
+Kesimpulan
+
+- Eksplorasi file seperti `lib.rs` membantu memahami konfigurasi global dan arsitektur aplikasi
+- Observer Pattern sangat memudahkan penambahan subscriber, tetapi lebih kompleks jika menambah banyak publisher
+- Postman sangat membantu dalam testing dan debugging API selama pengembangan
