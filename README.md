@@ -66,7 +66,7 @@ You can install Postman via this website: https://www.postman.com/downloads/
     -   [✓] Commit: `Create Notification database and Notification repository struct skeleton.`
     -   [✓] Commit: `Implement add function in Notification repository.`
     -   [✓] Commit: `Implement list_all_as_string function in Notification repository.`
-    -   [ ] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
+    -   [✓] Write answers of your learning module's "Reflection Subscriber-1" questions in this README.
 -   **STAGE 3: Implement services and controllers**
     -   [ ] Commit: `Create Notification service struct skeleton.`
     -   [ ] Commit: `Implement subscribe function in Notification service.`
@@ -85,5 +85,100 @@ This is the place for you to write reflections:
 ### Mandatory (Subscriber) Reflections
 
 #### Reflection Subscriber-1
+
+1. Mengapa menggunakan RwLock<> dan bukan Mutex<>?
+
+Pada kasus ini, kita menggunakan:
+
+```rust
+RwLock<Vec<Notification>>
+```
+
+Hal ini diperlukan karena data NOTIFICATIONS:
+
+- Diakses oleh banyak thread
+- Sering dibaca (read)
+- Kadang ditulis (write)
+
+Keunggulan RwLock<>:
+
+RwLock (Read-Write Lock) memungkinkan:
+
+- Banyak thread membaca data secara bersamaan (concurrent read)
+- Hanya satu thread yang bisa menulis (exclusive write)
+
+Cocok untuk kasus ini karena:
+
+- Operasi list_all_as_string() akan sering dipanggil (read-heavy)
+- Operasi add() lebih jarang (write)
+
+Jika menggunakan Mutex<>:
+
+- Hanya mengizinkan satu thread akses (read/write) dalam satu waktu
+- Semua thread lain harus menunggu (blocking)
+
+Dampaknya:
+
+- Performa lebih lambat
+- Tidak efisien untuk kasus yang banyak read
+
+Kesimpulan:
+
+- RwLock<> lebih efisien untuk kasus read-heavy
+- Mutex<> lebih sederhana, tapi kurang optimal untuk skenario ini
+
+2. Mengapa Rust tidak mengizinkan mutasi langsung pada static variable seperti di Java?
+
+Di Java:
+
+- Kita bisa dengan mudah memodifikasi static variable melalui static method
+- Tidak ada enforcement ketat terhadap thread safety
+
+Di Rust:
+
+Rust sangat ketat terhadap:
+
+- Memory safety
+- Thread safety
+- Race condition prevention
+
+Oleh karena itu:
+
+-```static``` variable di Rust bersifat immutable secara default
+- Tidak bisa langsung diubah tanpa mekanisme sinkronisasi
+
+Solusi di Rust:
+
+Untuk membuat static variable yang bisa diubah, kita gunakan:
+
+- lazy_static → untuk inisialisasi global variable secara aman
+- RwLock / Mutex → untuk memastikan thread safety
+
+Contoh:
+
+```rust
+lazy_static! {
+    static ref NOTIFICATIONS: RwLock<Vec<Notification>> = RwLock::new(vec![]);
+}
+```
+
+Dengan cara ini:
+
+- Data tetap global (seperti static di Java)
+- Tapi tetap aman dari race condition
+
+Kenapa Rust tidak membiarkan mutasi langsung?
+
+Karena tanpa proteksi:
+
+- Bisa terjadi data race
+- Bisa menyebabkan bug yang sulit dideteksi
+- Melanggar prinsip ownership dan borrowing di Rust
+
+Kesimpulan
+
+- RwLock<> digunakan karena lebih efisien untuk banyak operasi read dibanding Mutex<>
+- Rust tidak mengizinkan mutasi langsung pada static variable untuk menjaga keamanan dan mencegah race condition
+- Kombinasi lazy_static + RwLock adalah solusi aman untuk global mutable state di Rust
 
 #### Reflection Subscriber-2
